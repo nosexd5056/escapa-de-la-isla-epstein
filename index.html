@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escape de la Isla 3D - Mouse Lock Edition</title>
+  <title>Escape de la Isla 3D - Fixed Edition</title>
   <style>
     * { box-sizing: border-box; }
     body, html {
@@ -84,7 +84,6 @@
       border: 2px dashed #64748b; border-radius: 8px;
       display: flex; align-items: center; justify-content: center; font-size: 20px;
     }
-    .slot.active { border-style: solid; border-color: #38bdf8; background: #0284c7; }
 
     #boss-ui {
       position: absolute; top: 20px; left: 50%;
@@ -95,16 +94,6 @@
     #boss-title { color: #f87171; font-weight: bold; font-size: 18px; text-shadow: 0 0 10px #ef4444; margin-bottom: 6px; }
     #boss-hp-bg { width: 100%; height: 20px; background: rgba(0,0,0,0.85); border: 2px solid #ef4444; border-radius: 10px; overflow: hidden; }
     #boss-hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #dc2626, #f87171); transition: width 0.1s ease; }
-
-    #interaction-prompt {
-      position: absolute; bottom: 20%; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.95); color: #ffffff;
-      padding: 10px 24px; border-radius: 20px;
-      font-size: 14px; font-weight: 600; letter-spacing: 1px;
-      display: none; pointer-events: none;
-      border: 1px solid #475569; z-index: 5;
-    }
 
     .modal-msg {
       position: absolute; top: 50%; left: 50%;
@@ -127,11 +116,6 @@
       justify-content: center; align-items: center;
       z-index: 50; color: #ffffff;
     }
-    .credits-header { font-size: 18px; letter-spacing: 6px; text-transform: uppercase; color: #94a3b8; margin-bottom: 50px; }
-    .credits-grid { display: flex; gap: 90px; text-align: left; max-width: 850px; width: 85%; margin-bottom: 50px; }
-    .credits-col { flex: 1; display: flex; flex-direction: column; gap: 28px; }
-    .credit-role { font-size: 12px; color: #a1a1aa; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-    .credit-name { font-size: 18px; color: #f8fafc; font-weight: 700; text-transform: uppercase; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
@@ -155,7 +139,7 @@
 </div>
 
 <div id="ui-container">
-  <div id="objective-banner">Misión: Sube la colina y busca la llave de entrada</div>
+  <div id="objective-banner">Misión: Sube la rampa y busca la llave de entrada</div>
   <div class="inventory">
     <div class="slot" id="slot-key">🔒</div>
     <div style="width: 2px; background: #475569; margin: 0 4px;"></div>
@@ -166,8 +150,6 @@
     <div class="slot" id="slot-4"></div>
   </div>
 </div>
-
-<div id="interaction-prompt">Presiona Clic</div>
 
 <div id="crash-modal" class="modal-msg">
   🚨 ¡EL MOTOR DEL YATE HA FALLADO! 🚨
@@ -182,17 +164,7 @@
 </div>
 
 <div id="win-modal">
-  <div class="credits-header">ESCAPE DE LA ISLA</div>
-  <div class="credits-grid">
-    <div class="credits-col">
-      <div class="credit-role">Created and Directed by</div><div class="credit-name">GEMINI & THEBESTLARPER</div>
-      <div class="credit-role">Lead Game Design & Code</div><div class="credit-name">GEMINI</div>
-    </div>
-    <div class="credits-col">
-      <div class="credit-role">3D World & Island Architecture</div><div class="credit-name">THEBESTLARPER</div>
-      <div class="credit-role">Special Thanks</div><div class="credit-name">YOU (THE PLAYER)</div>
-    </div>
-  </div>
+  <h1 style="font-size:36px; margin-bottom:20px;">¡VICTORIA! HAS ESCAPADO</h1>
   <button class="menu-item" onclick="location.reload()" style="color:#94a3b8;">JUGAR DE NUEVO</button>
 </div>
 
@@ -200,15 +172,13 @@
   let scene, camera, renderer, controls;
   let items = [], collectedCount = 0;
   let hasMainKey = false, hasWrench = false, isDoorOpen = false;
-  let yachtGroup, doorMesh, keyMesh, wrenchGroup, keyBeaconMesh, keyLight, yachtBeaconMesh, yachtLight;
-  let smokeParticles = [], projectiles = [];
+  let yachtGroup, doorMesh, keyMesh, wrenchGroup;
   
   let gameState = 'PHASE1';
   let escapeProgress = 0;
 
-  let flashlight, epsteinGroup, epsteinArmL, epsteinArmR;
-  let epsteinSpeed = 0.095, animTime = 0;
-  let seaMonsterGroup, monsterHealth = 100, monsterDist = 70;
+  let flashlight, epsteinGroup;
+  let seaMonsterGroup, monsterHealth = 100;
 
   let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
   let prevTime = performance.now();
@@ -217,7 +187,6 @@
 
   const raycaster = new THREE.Raycaster();
   const screenCenter = new THREE.Vector2(0, 0);
-  const obstacleBoxes = [];
   const NIGHT_ISLAND_CENTER = new THREE.Vector3(-180, 0, -140);
 
   function init() {
@@ -296,17 +265,26 @@
   }
 
   function buildEnvironment() {
+    // Oceano
     const ocean = new THREE.Mesh(new THREE.PlaneGeometry(2200, 2200), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
     ocean.rotation.x = -Math.PI / 2;
     scene.add(ocean);
 
+    // Muelle
     const pier = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0x78350f }));
     pier.position.set(0, 0.5, 30);
     scene.add(pier);
 
+    // Meseta alta
     const plateau = new THREE.Mesh(new THREE.CylinderGeometry(22, 28, 7, 32), new THREE.MeshStandardMaterial({ color: 0x15803d }));
     plateau.position.set(0, 3.5, 0);
     scene.add(plateau);
+
+    // RAMPA DE ACCESO VISIBLE
+    const ramp = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 22), new THREE.MeshStandardMaterial({ color: 0x15803d }));
+    ramp.position.set(0, 3.5, 17);
+    ramp.rotation.x = 0.32; // Inclinación
+    scene.add(ramp);
   }
 
   function buildBuilding() {
@@ -324,7 +302,7 @@
 
   function createKeyAndItems() {
     keyMesh = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.2, 16, 32), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-    keyMesh.position.set(3.8, 4.5, 18); keyMesh.userData = { type: 'key' };
+    keyMesh.position.set(4, 8, 12); keyMesh.userData = { type: 'key' };
     scene.add(keyMesh);
 
     for(let i=0; i<5; i++) {
@@ -471,6 +449,18 @@
 
       controls.moveRight(-velocity.x * delta);
       controls.moveForward(-velocity.z * delta);
+
+      // ELEVACIÓN AUTOMÁTICA AL SUBIR LA RAMPA (FASE 1)
+      if (gameState === 'PHASE1') {
+        if (camera.position.z < 26 && camera.position.z > 8) {
+          let progress = (26 - camera.position.z) / 18;
+          camera.position.y = 1.7 + (progress * 7.0);
+        } else if (camera.position.z <= 8) {
+          camera.position.y = 8.7;
+        } else {
+          camera.position.y = 1.7;
+        }
+      }
 
       if (gameState === 'PHASE2_NIGHT') {
         flashlight.position.copy(camera.position);
