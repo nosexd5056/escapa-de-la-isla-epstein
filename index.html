@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escape de la Isla 3D</title>
+  <title>Escape de la Isla 3D - Limbo Menu Edition</title>
   <style>
     * { box-sizing: border-box; }
     body, html {
       margin: 0; padding: 0;
       width: 100%; height: 100%;
       overflow: hidden;
-      font-family: 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Segoe UI', -apple-system, Roboto, sans-serif;
       background-color: #020617;
       user-select: none;
     }
@@ -26,6 +26,7 @@
       box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
     }
 
+    /* MENÚ ESTILO LIMBO */
     #limbo-menu {
       position: absolute; top: 0; left: 0;
       width: 100vw; height: 100vh;
@@ -44,21 +45,42 @@
       text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     }
 
-    .menu-options { display: flex; flex-direction: column; gap: 16px; }
+    .menu-options {
+      display: flex; flex-direction: column;
+      gap: 16px;
+    }
 
     .menu-item {
       font-size: 19px; font-weight: 700;
       letter-spacing: 3px; color: #64748b;
       text-transform: uppercase; cursor: pointer;
-      transition: all 0.25s ease; width: fit-content;
+      transition: all 0.25s ease;
+      width: fit-content;
     }
 
-    .menu-item:hover {
+    .menu-item:hover, .menu-item.active {
       color: #ffffff;
       text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
       transform: translateX(8px);
     }
 
+    .menu-item.disabled {
+      color: #334155;
+      cursor: not-allowed;
+    }
+    .menu-item.disabled:hover {
+      transform: none; text-shadow: none; color: #334155;
+    }
+
+    #controls-panel {
+      margin-top: 30px; max-width: 450px;
+      font-size: 13px; color: #94a3b8;
+      line-height: 1.6; letter-spacing: 1px;
+      display: none; border-left: 2px solid #475569;
+      padding-left: 15px;
+    }
+
+    /* HUD E INVENTARIO */
     #ui-container {
       position: absolute; top: 20px; left: 50%;
       transform: translateX(-50%);
@@ -84,7 +106,9 @@
       border: 2px dashed #64748b; border-radius: 8px;
       display: flex; align-items: center; justify-content: center; font-size: 20px;
     }
+    .slot.active { border-style: solid; border-color: #38bdf8; background: #0284c7; box-shadow: 0 0 10px rgba(56,189,248,0.6); }
 
+    /* HUD Boss */
     #boss-ui {
       position: absolute; top: 20px; left: 50%;
       transform: translateX(-50%);
@@ -94,6 +118,16 @@
     #boss-title { color: #f87171; font-weight: bold; font-size: 18px; text-shadow: 0 0 10px #ef4444; margin-bottom: 6px; }
     #boss-hp-bg { width: 100%; height: 20px; background: rgba(0,0,0,0.85); border: 2px solid #ef4444; border-radius: 10px; overflow: hidden; }
     #boss-hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #dc2626, #f87171); transition: width 0.1s ease; }
+
+    #interaction-prompt {
+      position: absolute; bottom: 20%; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95); color: #ffffff;
+      padding: 10px 24px; border-radius: 20px;
+      font-size: 14px; font-weight: 600; letter-spacing: 1px;
+      display: none; pointer-events: none;
+      border: 1px solid #475569; z-index: 5;
+    }
 
     .modal-msg {
       position: absolute; top: 50%; left: 50%;
@@ -105,34 +139,64 @@
       box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9); max-width: 600px;
     }
     .modal-msg span { display: block; font-size: 15px; color: #cbd5e1; margin-top: 12px; font-weight: normal; line-height: 1.5; }
+
     #crash-modal { border: 2px solid #ef4444; color: #f87171; }
     #gameover-modal { border: 2px solid #dc2626; color: #ef4444; }
 
+    /* PANTALLA CRÉDITOS */
     #win-modal {
       position: fixed; top: 0; left: 0;
       width: 100vw; height: 100vh;
       background: rgba(5, 7, 12, 0.95);
+      backdrop-filter: blur(8px);
       display: none; flex-direction: column;
       justify-content: center; align-items: center;
       z-index: 50; color: #ffffff;
+      animation: creditsFadeIn 2.5s ease-in-out forwards;
     }
+    @keyframes creditsFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .credits-header { font-size: 18px; letter-spacing: 6px; text-transform: uppercase; color: #94a3b8; margin-bottom: 50px; }
+    .credits-grid { display: flex; gap: 90px; text-align: left; max-width: 850px; width: 85%; margin-bottom: 50px; }
+    .credits-col { flex: 1; display: flex; flex-direction: column; gap: 28px; }
+    .credit-item { display: flex; flex-direction: column; }
+    .credit-role { font-size: 12px; color: #a1a1aa; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .credit-name { font-size: 18px; color: #f8fafc; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+    .btn-restart-credits {
+      background: transparent; color: #94a3b8;
+      border: 1px solid #475569; font-size: 12px;
+      letter-spacing: 2px; text-transform: uppercase;
+      padding: 10px 28px; border-radius: 4px; cursor: pointer; transition: all 0.3s;
+    }
+    .btn-restart-credits:hover { color: #ffffff; border-color: #f8fafc; background: rgba(255,255,255,0.05); }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
 </head>
 <body>
 
 <div id="webgl-container"></div>
 <div id="crosshair"></div>
 
+<!-- MENÚ ESTILO LIMBO -->
 <div id="limbo-menu">
-  <div class="menu-title" id="menu-title">ESCAPE DE LA ISLA</div>
+  <div class="menu-title" id="menu-header-title">MENU</div>
   <div class="menu-options">
-    <div class="menu-item" id="btn-play">START GAME</div>
+    <div class="menu-item" id="btn-start" onclick="startGame()">START GAME</div>
+    <div class="menu-item disabled" id="btn-resume" onclick="resumeGame()">RESUME</div>
+    <div class="menu-item" onclick="toggleControls()">CONTROLS</div>
     <div class="menu-item" onclick="location.reload()">EXIT</div>
+  </div>
+
+  <div id="controls-panel">
+    <b>W, A, S, D</b> — Moverse<br>
+    <b>RATÓN</b> — Mirar / Apuntar<br>
+    <b>CLIC IZQUIERDO</b> — Interactuar / Disparar<br>
+    <b>ESC</b> — Pausa / Menú
   </div>
 </div>
 
+<!-- HUD Boss -->
 <div id="boss-ui">
   <div id="boss-title">⚠️ LEVIATÁN MARÍTIMO DE LAS PROFUNDIDADES ⚠️</div>
   <div id="boss-hp-bg"><div id="boss-hp-fill"></div></div>
@@ -141,7 +205,7 @@
 <div id="ui-container">
   <div id="objective-banner">Misión: Sube la colina y busca la llave de entrada</div>
   <div class="inventory">
-    <div class="slot" id="slot-key">🔒</div>
+    <div class="slot" id="slot-key" title="Llave / Herramienta">🔒</div>
     <div style="width: 2px; background: #475569; margin: 0 4px;"></div>
     <div class="slot" id="slot-0"></div>
     <div class="slot" id="slot-1"></div>
@@ -151,43 +215,109 @@
   </div>
 </div>
 
+<div id="interaction-prompt">Presiona Clic</div>
+
+<!-- Modales -->
 <div id="crash-modal" class="modal-msg">
   🚨 ¡EL MOTOR DEL YATE HA FALLADO! 🚨
-  <span>El yate encalló en la gran isla industrial nocturna.<br><br><b>🔴 Sigue la LUZ ROJA para la LLAVE INGLESA 🔧.<br>🔷 Sigue la LUZ AZUL para volver al YATE.</b></span>
-  <div class="menu-item" onclick="startNightPhase()" style="margin-top:25px; color:#ef4444; margin-left: auto; margin-right: auto;">[ EXPLORAR ISLA NOCTURNA ]</div>
+  <span>El yate encalló en la gran isla industrial nocturna.<br><br><b>🔴 Sigue el LUZ ROJA en el cielo para la LLAVE INGLESA 🔧.<br>🔷 Sigue el LUZ AZUL en el cielo para volver al YATE.</b></span>
+  <div class="menu-item" onclick="startNightPhase()" style="margin-top:25px; color:#ef4444;">[ EXPLORAR ISLA NOCTURNA ]</div>
 </div>
 
 <div id="gameover-modal" class="modal-msg">
   😱 ¡HAS SIDO DESTRUIDO!
   <span id="gameover-reason">El enemigo te atrapó...</span>
-  <div class="menu-item" onclick="location.reload()" style="margin-top:25px; color:#ffffff; margin-left: auto; margin-right: auto;">[ REINTENTAR ]</div>
+  <div class="menu-item" onclick="location.reload()" style="margin-top:25px; color:#ffffff;">[ REINTENTAR ]</div>
 </div>
 
+<!-- CRÉDITOS FINAL JUEGO -->
 <div id="win-modal">
-  <h1 style="font-size:36px; margin-bottom:20px;">¡VICTORIA! HAS ESCAPADO</h1>
-  <button class="menu-item" onclick="location.reload()" style="color:#94a3b8;">JUGAR DE NUEVO</button>
+  <div class="credits-header">ESCAPE DE LA ISLA</div>
+  <div class="credits-grid">
+    <div class="credits-col">
+      <div class="credit-item"><span class="credit-role">Created and Directed by</span><span class="credit-name">GEMINI & THEBESTLARPER</span></div>
+      <div class="credit-item"><span class="credit-role">Lead Game Design & Code</span><span class="credit-name">GEMINI</span></div>
+      <div class="credit-item"><span class="credit-role">3D World & Island Architecture</span><span class="credit-name">THEBESTLARPER</span></div>
+      <div class="credit-item"><span class="credit-role">Executive Production</span><span class="credit-name">THEBESTLARPER</span></div>
+    </div>
+    <div class="credits-col">
+      <div class="credit-item"><span class="credit-role">Atmosphere & Lighting</span><span class="credit-name">GEMINI</span></div>
+      <div class="credit-item"><span class="credit-role">Enemy AI & Boss Encounter</span><span class="credit-name">THEBESTLARPER & GEMINI</span></div>
+      <div class="credit-item"><span class="credit-role">Special Thanks</span><span class="credit-name">YOU (THE PLAYER)</span></div>
+    </div>
+  </div>
+  <button class="btn-restart-credits" onclick="location.reload()">JUGAR DE NUEVO</button>
 </div>
 
 <script>
-  let scene, camera, renderer, controls;
+  let scene, camera, renderer, sunLight, hemiLight;
   let items = [], collectedCount = 0;
   let hasMainKey = false, hasWrench = false, isDoorOpen = false;
-  let yachtGroup, doorMesh, keyMesh, wrenchGroup;
+  let yachtGroup, doorMesh, keyMesh, wrenchGroup, keyBeaconMesh, keyLight;
+  let yachtBeaconMesh, yachtLight;
+  let smokeParticles = [], projectiles = [];
   
-  let gameState = 'PHASE1';
+  let gameState = 'PHASE1'; 
+  let gameStarted = false;
   let escapeProgress = 0;
 
-  let flashlight, epsteinGroup;
-  let seaMonsterGroup, monsterHealth = 100;
+  let flashlight, epsteinGroup, epsteinArmL, epsteinArmR;
+  let epsteinSpeed = 0.095;
+  let animTime = 0;
 
-  let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-  let prevTime = performance.now();
-  const velocity = new THREE.Vector3();
-  const direction = new THREE.Vector3();
+  let seaMonsterGroup, monsterHealth = 100, monsterDist = 70;
 
+  let isLocked = false;
+  let yaw = 0, pitch = 0;
+  const moveState = { forward: false, backward: false, left: false, right: false };
+  const playerPos = new THREE.Vector3(0, 1.7, 32); 
   const raycaster = new THREE.Raycaster();
   const screenCenter = new THREE.Vector2(0, 0);
+
+  const obstacleBoxes = [];
   const NIGHT_ISLAND_CENTER = new THREE.Vector3(-180, 0, -140);
+  const NIGHT_ISLAND_RADIUS = 135; 
+
+  const itemData = [
+    { name: "Mapa de Navegación", icon: "🗺️", color: 0xeab308, pos: [-5, 8.2, -5], geom: new THREE.CylinderGeometry(0.12, 0.12, 0.6, 16) },
+    { name: "Radio GPS", icon: "📻", color: 0x3b82f6, pos: [5, 8.3, -5], geom: new THREE.BoxGeometry(0.5, 0.4, 0.3) },
+    { name: "Bidón de Gasolina", icon: "⛽", color: 0xef4444, pos: [-5, 7.6, 5], geom: new THREE.BoxGeometry(0.5, 0.7, 0.4) },
+    { name: "Pieza del Motor", icon: "⚙️", color: 0x94a3b8, pos: [5, 8.2, 5], geom: new THREE.TorusGeometry(0.2, 0.08, 12, 24) },
+    { name: "Linterna de Señales", icon: "🔦", color: 0x10b981, pos: [0, 8.2, -1], geom: new THREE.CylinderGeometry(0.12, 0.18, 0.5, 16) }
+  ];
+
+  function createStripeTexture() {
+    const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    const stripes = 8; const h = 512 / stripes;
+    for (let i = 0; i < stripes; i++) {
+      ctx.fillStyle = (i % 2 === 0) ? '#1e40af' : '#f8fafc';
+      ctx.fillRect(0, i * h, 512, h);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+    return texture;
+  }
+
+  function createWoodTexture() {
+    const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#78350f'; ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = '#451a03';
+    for (let i = 0; i < 150; i++) {
+      ctx.fillRect(Math.random() * 512, 0, Math.random() * 3 + 1, 512);
+    }
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function addObstacleBox(centerPos, size, minY = -10, maxY = 50, isDoor = false) {
+    const halfX = size.x / 2; const halfZ = size.z / 2;
+    obstacleBoxes.push({
+      minX: centerPos.x - halfX, maxX: centerPos.x + halfX,
+      minZ: centerPos.z - halfZ, maxZ: centerPos.z + halfZ,
+      minY: minY, maxY: maxY, isDoor: isDoor
+    });
+  }
 
   function init() {
     scene = new THREE.Scene();
@@ -195,155 +325,425 @@
     scene.fog = new THREE.FogExp2(0x38bdf8, 0.0035);
 
     camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.rotation.order = 'YXZ';
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     document.getElementById('webgl-container').appendChild(renderer.domElement);
 
-    controls = new THREE.PointerLockControls(camera, document.body);
+    hemiLight = new THREE.HemisphereLight(0x38bdf8, 0x15803d, 0.7);
+    scene.add(hemiLight);
 
-    const menu = document.getElementById('limbo-menu');
-    const btnPlay = document.getElementById('btn-play');
-
-    btnPlay.addEventListener('click', () => controls.lock());
-
-    controls.addEventListener('lock', () => {
-      menu.style.display = 'none';
-    });
-
-    controls.addEventListener('unlock', () => {
-      if (gameState !== 'CINEMATIC' && gameState !== 'WIN') {
-        menu.style.display = 'flex';
-        document.getElementById('menu-title').textContent = "PAUSED";
-      }
-    });
-
-    scene.add(new THREE.HemisphereLight(0x38bdf8, 0x15803d, 0.7));
-    const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.5);
+    sunLight = new THREE.DirectionalLight(0xfffbeb, 1.5);
     sunLight.position.set(50, 70, 30);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048; sunLight.shadow.mapSize.height = 2048;
     scene.add(sunLight);
 
     flashlight = new THREE.SpotLight(0xffffff, 0, 80, Math.PI / 4, 0.3, 1);
+    flashlight.castShadow = true;
     scene.add(flashlight); scene.add(flashlight.target);
 
     buildEnvironment();
-    buildBuilding();
+    buildBuildingWith4Rooms();
     createKeyAndItems();
     buildLuxuryYacht();
     buildHugeNightIsland();
     createEpsteinMonster();
     createSeaMonster();
 
-    setupKeyControls();
+    setupControls();
     window.addEventListener('resize', onWindowResize);
 
-    camera.position.set(0, 1.7, 32);
     animate();
   }
 
-  function setupKeyControls() {
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'KeyW') moveForward = true;
-      if (e.code === 'KeyS') moveBackward = true;
-      if (e.code === 'KeyA') moveLeft = true;
-      if (e.code === 'KeyD') moveRight = true;
-    });
+  function toggleControls() {
+    const panel = document.getElementById('controls-panel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
 
-    document.addEventListener('keyup', (e) => {
-      if (e.code === 'KeyW') moveForward = false;
-      if (e.code === 'KeyS') moveBackward = false;
-      if (e.code === 'KeyA') moveLeft = false;
-      if (e.code === 'KeyD') moveRight = false;
-    });
+  function startGame() {
+    gameStarted = true;
+    const btnResume = document.getElementById('btn-resume');
+    btnResume.classList.remove('disabled');
+    document.getElementById('menu-header-title').textContent = "PAUSED";
+    document.body.requestPointerLock();
+  }
 
-    document.addEventListener('click', () => {
-      if (!controls.isLocked) return;
-      if (gameState === 'PHASE3_SEA_BOSS') shootProjectileAtMonster();
-      else handleInteraction();
-    });
+  function resumeGame() {
+    if (!gameStarted) return;
+    document.body.requestPointerLock();
   }
 
   function buildEnvironment() {
-    const ocean = new THREE.Mesh(new THREE.PlaneGeometry(2200, 2200), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
+    const ocean = new THREE.Mesh(
+      new THREE.PlaneGeometry(2200, 2200),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, metalness: 0.4 })
+    );
     ocean.rotation.x = -Math.PI / 2;
     scene.add(ocean);
 
-    const pier = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+    const pier = new THREE.Mesh(
+      new THREE.BoxGeometry(4.5, 0.4, 16),
+      new THREE.MeshStandardMaterial({ map: createWoodTexture(), roughness: 0.8 })
+    );
     pier.position.set(0, 0.5, 30);
     scene.add(pier);
 
-    const plateau = new THREE.Mesh(new THREE.CylinderGeometry(22, 28, 7, 32), new THREE.MeshStandardMaterial({ color: 0x15803d }));
+    const plateau = new THREE.Mesh(
+      new THREE.CylinderGeometry(22, 28, 7, 32),
+      new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.9 })
+    );
     plateau.position.set(0, 3.5, 0);
     scene.add(plateau);
+
+    const ramp = new THREE.Mesh(
+      new THREE.BoxGeometry(6, 0.5, 14),
+      new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.8 })
+    );
+    ramp.position.set(0, 3.7, 16); ramp.rotation.x = 0.48;
+    scene.add(ramp);
   }
 
-  function buildBuilding() {
-    const bGroup = new THREE.Group(); bGroup.position.y = 7;
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+  function buildBuildingWith4Rooms() {
+    const buildingGroup = new THREE.Group();
+    buildingGroup.position.y = 7;
 
-    doorMesh = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.5, 0.3), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+    const stripeTex = createStripeTexture(); const woodTex = createWoodTexture();
+    const wallMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.4 });
+    const innerWallMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5 });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 });
+    const woodMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.7 });
+
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.5), wallMat); backWall.position.set(0, 2.5, -10);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 20), wallMat); leftWall.position.set(-10, 2.5, 0);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 20), wallMat); rightWall.position.set(10, 2.5, 0);
+    const frontWallL = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.5), wallMat); frontWallL.position.set(-6, 2.5, 10);
+    const frontWallR = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.5), wallMat); frontWallR.position.set(6, 2.5, 10);
+    const frontWallTop = new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 0.5), wallMat); frontWallTop.position.set(0, 4.25, 10);
+
+    doorMesh = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.5, 0.3), woodMat);
     doorMesh.position.set(0, 1.75, 10); doorMesh.userData = { type: 'door' };
-    bGroup.add(doorMesh);
+    buildingGroup.add(doorMesh);
 
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), wallMat); floor.position.set(0, 0.1, 0);
-    bGroup.add(floor);
-    scene.add(bGroup);
-  }
+    addObstacleBox(new THREE.Vector3(0, 9.5, -10), new THREE.Vector3(20, 5, 0.5));
+    addObstacleBox(new THREE.Vector3(-10, 9.5, 0), new THREE.Vector3(0.5, 5, 20));
+    addObstacleBox(new THREE.Vector3(10, 9.5, 0), new THREE.Vector3(0.5, 5, 20));
+    addObstacleBox(new THREE.Vector3(-6, 9.5, 10), new THREE.Vector3(8, 5, 0.5));
+    addObstacleBox(new THREE.Vector3(6, 9.5, 10), new THREE.Vector3(8, 5, 0.5));
+    addObstacleBox(new THREE.Vector3(0, 9.5, 10), new THREE.Vector3(4, 5, 0.5), 6.5, 13, true);
 
-  function createKeyAndItems() {
-    keyMesh = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.2, 16, 32), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-    keyMesh.position.set(3.8, 4.5, 18); keyMesh.userData = { type: 'key' };
-    scene.add(keyMesh);
+    const midWallL = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.4), innerWallMat); midWallL.position.set(-6, 2.5, 0);
+    const midWallR = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.4), innerWallMat); midWallR.position.set(6, 2.5, 0);
+    buildingGroup.add(midWallL, midWallR);
+    addObstacleBox(new THREE.Vector3(-6, 9.5, 0), new THREE.Vector3(8, 5, 0.4));
+    addObstacleBox(new THREE.Vector3(6, 9.5, 0), new THREE.Vector3(8, 5, 0.4));
 
-    for(let i=0; i<5; i++) {
-      const item = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
-      item.position.set(-5 + i*2.5, 8.2, -3);
-      item.userData = { type: 'item', id: i };
-      scene.add(item); items.push(item);
-    }
-  }
+    const northWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5, 7), innerWallMat); northWall.position.set(0, 2.5, -6.5);
+    buildingGroup.add(northWall);
+    addObstacleBox(new THREE.Vector3(0, 9.5, -6.5), new THREE.Vector3(0.4, 5, 7));
 
-  function buildLuxuryYacht() {
-    yachtGroup = new THREE.Group();
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 8), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
-    hull.userData = { type: 'yacht' };
-    yachtGroup.add(hull);
-    yachtGroup.position.set(0, 1.2, 36);
-    scene.add(yachtGroup);
+    const southWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5, 7), innerWallMat); southWall.position.set(0, 2.5, 6.5);
+    buildingGroup.add(southWall);
+    addObstacleBox(new THREE.Vector3(0, 9.5, 6.5), new THREE.Vector3(0.4, 5, 7));
+
+    const roomPositions = [ { x: -5, z: -5 }, { x: 5, z: -5 }, { x: -5, z: 5 }, { x: 5, z: 5 } ];
+    roomPositions.forEach((pos) => {
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      bulb.position.set(pos.x, 4.5, pos.z); buildingGroup.add(bulb);
+      const roomLight = new THREE.PointLight(0xfef08a, 1.8, 12); roomLight.position.set(pos.x, 4.2, pos.z);
+      buildingGroup.add(roomLight);
+    });
+
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), floorMat); floor.position.set(0, 0.1, 0);
+    const ceiling = new THREE.Mesh(new THREE.BoxGeometry(20.2, 0.3, 20.2), wallMat); ceiling.position.set(0, 5.15, 0);
+    buildingGroup.add(backWall, leftWall, rightWall, frontWallL, frontWallR, frontWallTop, floor, ceiling);
+
+    scene.add(buildingGroup);
   }
 
   function buildHugeNightIsland() {
-    const island = new THREE.Mesh(new THREE.CylinderGeometry(135, 155, 12, 32), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
-    island.position.copy(NIGHT_ISLAND_CENTER);
-    scene.add(island);
+    const islandGroup = new THREE.Group();
+    islandGroup.position.copy(NIGHT_ISLAND_CENTER);
+
+    const mainIslandTerrain = new THREE.Mesh(
+      new THREE.CylinderGeometry(135, 155, 12, 48),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 })
+    );
+    mainIslandTerrain.position.set(0, 5, 0); islandGroup.add(mainIslandTerrain);
+
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.6 });
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+
+    const whiteBuilding = new THREE.Mesh(new THREE.BoxGeometry(32, 9, 14), whiteMat);
+    whiteBuilding.position.set(-20, 15, -30); islandGroup.add(whiteBuilding);
+    addObstacleBox(new THREE.Vector3(NIGHT_ISLAND_CENTER.x - 20, 0, NIGHT_ISLAND_CENTER.z - 30), new THREE.Vector3(33, 10, 15));
+
+    const whC = new THREE.Mesh(new THREE.BoxGeometry(28, 11, 24), wallMat);
+    whC.position.set(10, 16, -60); islandGroup.add(whC);
+    addObstacleBox(new THREE.Vector3(NIGHT_ISLAND_CENTER.x + 10, 0, NIGHT_ISLAND_CENTER.z - 60), new THREE.Vector3(29, 11, 25));
+
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(2, 2.5, 1.4, 16),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
+    );
+    pedestal.position.set(10, 11.2, -40); islandGroup.add(pedestal);
+
+    scene.add(islandGroup);
 
     wrenchGroup = new THREE.Group();
-    const w = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3.2, 0.4), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
-    w.userData = { type: 'wrench' };
-    wrenchGroup.add(w);
-    wrenchGroup.position.set(NIGHT_ISLAND_CENTER.x + 10, 8, NIGHT_ISLAND_CENTER.z - 40);
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.9, roughness: 0.1, emissive: 0x0284c7, emissiveIntensity: 0.9 });
+    
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.6, 3.2, 0.4), metalMat); handle.position.y = 0.8;
+    const head1 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.4, 12), metalMat); head1.position.y = 2.2;
+    const head2 = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.4, 12), metalMat); head2.position.y = -0.5;
+
+    handle.userData = { type: 'wrench' }; head1.userData = { type: 'wrench' }; head2.userData = { type: 'wrench' };
+
+    wrenchGroup.add(handle, head1, head2);
+    wrenchGroup.position.set(NIGHT_ISLAND_CENTER.x + 10, 13.2, NIGHT_ISLAND_CENTER.z - 40);
+    wrenchGroup.userData = { type: 'wrench' };
     scene.add(wrenchGroup);
+
+    keyLight = new THREE.PointLight(0xef4444, 10, 30);
+    keyLight.position.copy(wrenchGroup.position);
+    scene.add(keyLight);
+
+    const beaconGeom = new THREE.CylinderGeometry(1.5, 1.5, 300, 16);
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide });
+    keyBeaconMesh = new THREE.Mesh(beaconGeom, beaconMat);
+    keyBeaconMesh.position.set(NIGHT_ISLAND_CENTER.x + 10, 150, NIGHT_ISLAND_CENTER.z - 40);
+    scene.add(keyBeaconMesh);
   }
 
   function createEpsteinMonster() {
     epsteinGroup = new THREE.Group();
-    const m = new THREE.Mesh(new THREE.BoxGeometry(1, 2.5, 1), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
-    epsteinGroup.add(m);
-    epsteinGroup.position.set(NIGHT_ISLAND_CENTER.x - 30, 8, NIGHT_ISLAND_CENTER.z - 10);
+    const suitMat = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.8 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.5 });
+    const redEyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.85, 0.5), suitMat); torso.position.y = 1.4;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.58, 0.48), skinMat); head.position.y = 2.58;
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07), redEyeMat); eyeL.position.set(-0.13, 2.6, 0.24);
+    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.07), redEyeMat); eyeR.position.set(0.13, 2.6, 0.24);
+
+    epsteinArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.7), suitMat); epsteinArmL.position.set(-0.58, 1.3, 0);
+    epsteinArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.7), suitMat); epsteinArmR.position.set(0.58, 1.3, 0);
+
+    const mLight = new THREE.PointLight(0xef4444, 3, 12); mLight.position.set(0, 2.5, 0.4);
+
+    epsteinGroup.add(torso, head, eyeL, eyeR, epsteinArmL, epsteinArmR, mLight);
+    epsteinGroup.position.set(NIGHT_ISLAND_CENTER.x - 30, 11, NIGHT_ISLAND_CENTER.z - 10);
     epsteinGroup.visible = false;
     scene.add(epsteinGroup);
   }
 
   function createSeaMonster() {
     seaMonsterGroup = new THREE.Group();
-    const head = new THREE.Mesh(new THREE.SphereGeometry(4.5), new THREE.MeshStandardMaterial({ color: 0x064e3b }));
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.5 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const toothMat = new THREE.MeshStandardMaterial({ color: 0xfffbe1 });
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(4.5, 16, 16), skinMat); head.scale.set(1, 1.2, 1.6);
     seaMonsterGroup.add(head);
+
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.75), eyeMat); eyeL.position.set(-1.9, 1.6, 3.0);
+    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.75), eyeMat); eyeR.position.set(1.9, 1.6, 3.0);
+    seaMonsterGroup.add(eyeL, eyeR);
+
+    for (let i = 0; i < 9; i++) {
+      const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.4, 8), toothMat);
+      tooth.rotation.x = -Math.PI / 3; tooth.position.set(-2.2 + i * 0.55, -1.3, 4.0);
+      seaMonsterGroup.add(tooth);
+    }
+
+    for (let i = 0; i < 4; i++) {
+      const tentacle = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.9, 9, 12), skinMat);
+      tentacle.position.set(i % 2 === 0 ? 5.5 : -5.5, -1, -2 + i * 2);
+      tentacle.rotation.z = i % 2 === 0 ? -0.6 : 0.6;
+      seaMonsterGroup.add(tentacle);
+    }
+
+    const monsterLight = new THREE.PointLight(0xef4444, 6, 50); monsterLight.position.set(0, 2, 3);
+    seaMonsterGroup.add(monsterLight);
+
     seaMonsterGroup.visible = false;
     scene.add(seaMonsterGroup);
   }
 
+  function createKeyAndItems() {
+    keyMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(0.6, 0.2, 16, 32),
+      new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.1, emissive: 0xeab308, emissiveIntensity: 0.8 })
+    );
+    keyMesh.position.set(3.8, 4.5, 18); keyMesh.userData = { type: 'key' };
+
+    const keyGlow = new THREE.PointLight(0xfacc15, 3, 10); keyGlow.position.copy(keyMesh.position);
+    scene.add(keyGlow); scene.add(keyMesh);
+
+    itemData.forEach((data, index) => {
+      const mat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.2, metalness: 0.4, emissive: data.color, emissiveIntensity: 0.2 });
+      const mesh = new THREE.Mesh(data.geom, mat);
+      mesh.position.set(...data.pos);
+      mesh.userData = { id: index, type: 'item', name: data.name, icon: data.icon };
+      scene.add(mesh); items.push(mesh);
+    });
+  }
+
+  function buildLuxuryYacht() {
+    yachtGroup = new THREE.Group();
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15, metalness: 0.1 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1, metalness: 0.9 });
+
+    const hullShape = new THREE.Shape();
+    hullShape.moveTo(0, 5); hullShape.quadraticCurveTo(2, 2, 2, -4); hullShape.lineTo(-2, -4); hullShape.quadraticCurveTo(-2, 2, 0, 5);
+
+    const extrudeSettings = { depth: 1.8, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.3, bevelThickness: 0.3 };
+    const hullGeom = new THREE.ExtrudeGeometry(hullShape, extrudeSettings);
+    const hull = new THREE.Mesh(hullGeom, whiteMat);
+    hull.rotation.x = Math.PI / 2; hull.rotation.z = Math.PI; hull.position.y = 1.0;
+    yachtGroup.add(hull); hull.userData = { type: 'yacht' };
+
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.5, 5), whiteMat); cabin.position.set(0, 1.8, -0.5);
+    const windows = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.7, 3.8), glassMat); windows.position.set(0, 1.9, -0.2);
+    cabin.userData = { type: 'yacht' }; windows.userData = { type: 'yacht' };
+    yachtGroup.add(cabin, windows);
+
+    yachtGroup.position.set(0, 0.2, 36);
+    scene.add(yachtGroup);
+  }
+
+  function setupControls() {
+    document.addEventListener('pointerlockchange', () => {
+      isLocked = (document.pointerLockElement === document.body);
+      const limboMenu = document.getElementById('limbo-menu');
+      if (gameState !== 'CINEMATIC' && gameState !== 'WIN' && gameState !== 'GAMEOVER') {
+        limboMenu.style.display = isLocked ? 'none' : 'flex';
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isLocked) return;
+      yaw -= e.movementX * 0.0025;
+      pitch -= e.movementY * 0.0025;
+      pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') moveState.forward = true;
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') moveState.backward = true;
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') moveState.left = true;
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right = true;
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') moveState.forward = false;
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') moveState.backward = false;
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') moveState.left = false;
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right = false;
+    });
+
+    document.addEventListener('click', () => {
+      if (!isLocked) return;
+      if (gameState === 'PHASE3_SEA_BOSS') {
+        shootProjectileAtMonster();
+      } else {
+        handleInteraction();
+      }
+    });
+  }
+
+  function isValidPosition(x, z, radius = 0.5, entityY = playerPos.y) {
+    if (gameState === 'PHASE1') {
+      const distFromCenter = Math.hypot(x, z);
+      if (distFromCenter > 24 && z < 22) return false;
+    } 
+    else if (gameState === 'PHASE2_NIGHT') {
+      const distFromIslandCenter = Math.hypot(x - NIGHT_ISLAND_CENTER.x, z - NIGHT_ISLAND_CENTER.z);
+      if (distFromIslandCenter > NIGHT_ISLAND_RADIUS) return false;
+    }
+
+    for (let i = 0; i < obstacleBoxes.length; i++) {
+      const box = obstacleBoxes[i];
+      if (box.isDoor && isDoorOpen) continue;
+
+      if (entityY >= box.minY && entityY <= box.maxY) {
+        if (x + radius > box.minX && x - radius < box.maxX &&
+            z + radius > box.minZ && z - radius < box.maxZ) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function updatePlayerMovement() {
+    if (!isLocked || gameState === 'PHASE3_SEA_BOSS') return;
+
+    const speed = 0.14;
+    const moveVector = new THREE.Vector3();
+
+    if (moveState.forward) moveVector.z -= 1;
+    if (moveState.backward) moveVector.z += 1;
+    if (moveState.left) moveVector.x -= 1;
+    if (moveState.right) moveVector.x += 1;
+
+    moveVector.normalize();
+    moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    moveVector.multiplyScalar(speed);
+
+    const nextX = playerPos.x + moveVector.x;
+    const nextZ = playerPos.z + moveVector.z;
+
+    if (isValidPosition(nextX, playerPos.z, 0.5, playerPos.y)) playerPos.x = nextX;
+    if (isValidPosition(playerPos.x, nextZ, 0.5, playerPos.y)) playerPos.z = nextZ;
+
+    if (gameState === 'PHASE1') {
+      if (playerPos.z > 22) playerPos.y = 1.7;
+      else if (playerPos.z > 10) playerPos.y = 1.7 + ((22 - playerPos.z) / 12) * 7.0;
+      else playerPos.y = 8.7;
+    } else if (gameState === 'PHASE2_NIGHT') {
+      playerPos.y = 11.7; 
+    }
+
+    camera.position.copy(playerPos);
+    camera.rotation.set(0, 0, 0); camera.rotation.y = yaw; camera.rotation.x = pitch;
+
+    if (gameState === 'PHASE2_NIGHT') {
+      flashlight.position.copy(camera.position);
+      const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+      flashlight.target.position.copy(camera.position).add(dir.multiplyScalar(15));
+      flashlight.target.updateMatrixWorld();
+    }
+  }
+
+  function collectWrench() {
+    hasWrench = true;
+    if (wrenchGroup) scene.remove(wrenchGroup);
+    if (keyBeaconMesh) scene.remove(keyBeaconMesh);
+    if (keyLight) scene.remove(keyLight);
+    wrenchGroup = null;
+
+    document.getElementById('slot-key').textContent = '🔧';
+    document.getElementById('objective-banner').textContent = "¡LLAVE INGLESA ENCONTRADA! 🔧 Sigue la LUZ AZUL hacia el yate";
+  }
+
   function handleInteraction() {
+    if (gameState === 'PHASE2_NIGHT' && wrenchGroup) {
+      const distToWrench = playerPos.distanceTo(wrenchGroup.position);
+      if (distToWrench < 6.0) { collectWrench(); return; }
+    }
+
+    if (gameState === 'PHASE2_NIGHT' && hasWrench) {
+      const distToYacht = playerPos.distanceTo(yachtGroup.position);
+      if (distToYacht < 12.0) { startSeaBossPhase(); return; }
+    }
+
     raycaster.setFromCamera(screenCenter, camera);
     const targets = [...items, doorMesh, ...yachtGroup.children];
     if (keyMesh) targets.push(keyMesh);
@@ -358,25 +758,31 @@
       if (type === 'key') {
         hasMainKey = true; scene.remove(keyMesh); keyMesh = null;
         document.getElementById('slot-key').textContent = '🔑';
-        document.getElementById('objective-banner').textContent = "Abre la puerta con la llave";
+        document.getElementById('slot-key').classList.add('active');
+        document.getElementById('objective-banner').textContent = "Misión: Abre la puerta principal con la llave";
       }
-      else if (type === 'door' && hasMainKey) {
-        isDoorOpen = true; doorMesh.position.y += 4;
-        document.getElementById('objective-banner').textContent = "Recolecta los 5 objetos";
+      else if (type === 'door') {
+        if (hasMainKey && !isDoorOpen) {
+          isDoorOpen = true; doorMesh.position.y += 4;
+          document.getElementById('objective-banner').textContent = "Misión: Explora los 4 cuartos y junta los 5 objetos";
+        }
       }
       else if (type === 'item') {
         scene.remove(obj); items = items.filter(i => i !== obj);
-        document.getElementById(`slot-${collectedCount}`).textContent = '📦';
+        const slot = document.getElementById(`slot-${collectedCount}`);
+        slot.textContent = obj.userData.icon; slot.classList.add('active');
         collectedCount++;
-        if (collectedCount >= 5) document.getElementById('objective-banner').textContent = "Baja al yate para escapar";
+        if (collectedCount < 5) {
+          document.getElementById('objective-banner').textContent = `Objetos recolectados (${collectedCount}/5)`;
+        } else {
+          document.getElementById('objective-banner').textContent = "¡Tienes todo! Baja al muelle y aborda el Yate";
+        }
       }
       else if (type === 'yacht' && collectedCount === 5 && gameState === 'PHASE1') {
         startEscapeSequence();
       }
       else if (type === 'wrench' && gameState === 'PHASE2_NIGHT') {
-        hasWrench = true; scene.remove(wrenchGroup); wrenchGroup = null;
-        document.getElementById('slot-key').textContent = '🔧';
-        document.getElementById('objective-banner').textContent = "Regresa al yate para reparar el motor";
+        collectWrench();
       }
       else if (type === 'yacht' && hasWrench && gameState === 'PHASE2_NIGHT') {
         startSeaBossPhase();
@@ -384,93 +790,249 @@
     }
   }
 
+  function updateRaycastPrompt() {
+    if (!isLocked) {
+      document.getElementById('interaction-prompt').style.display = 'none';
+      return;
+    }
+
+    const prompt = document.getElementById('interaction-prompt');
+
+    if (gameState === 'PHASE2_NIGHT') {
+      if (wrenchGroup) {
+        const distToWrench = playerPos.distanceTo(wrenchGroup.position);
+        if (distToWrench < 6.0) {
+          prompt.textContent = "¡Haz Clic para tomar la LLAVE INGLESA DE REPARACIÓN! 🔧";
+          prompt.style.display = 'block'; return;
+        }
+      }
+      if (hasWrench) {
+        const distToYacht = playerPos.distanceTo(yachtGroup.position);
+        if (distToYacht < 12.0) {
+          prompt.textContent = "¡Clic para REPARAR EL YATE Y ZARPAR! 🔷🚤";
+          prompt.style.display = 'block'; return;
+        }
+      }
+    }
+
+    raycaster.setFromCamera(screenCenter, camera);
+    const targets = [...items, doorMesh, ...yachtGroup.children];
+    if (keyMesh) targets.push(keyMesh);
+    if (wrenchGroup) targets.push(...wrenchGroup.children);
+
+    const intersects = raycaster.intersectObjects(targets);
+
+    if (intersects.length > 0 && intersects[0].distance < 8.0) {
+      const obj = intersects[0].object;
+      const type = obj.userData.type || (obj.parent && obj.parent.userData.type);
+
+      if (type === 'key') { prompt.textContent = "Clic para tomar: Llave de Entrada 🔑"; prompt.style.display = 'block'; }
+      else if (type === 'door') { prompt.textContent = hasMainKey ? "Clic para abrir la puerta 🔓" : "Necesitas la Llave 🔒"; prompt.style.display = 'block'; }
+      else if (type === 'item') { prompt.textContent = `Clic para tomar: ${obj.userData.name}`; prompt.style.display = 'block'; }
+      else if (type === 'yacht' && gameState === 'PHASE1') { prompt.textContent = collectedCount === 5 ? "Clic para ESCAPAR 🚤" : `Faltan objetos (${collectedCount}/5)`; prompt.style.display = 'block'; }
+      else if (type === 'wrench') { prompt.textContent = "¡Clic para tomar la LLAVE INGLESA DE REPARACIÓN! 🔧"; prompt.style.display = 'block'; }
+      else if (type === 'yacht' && gameState === 'PHASE2_NIGHT') {
+        prompt.textContent = hasWrench ? "¡Clic para REPARAR EL MOTOR Y ZARPAR! 🔧🚤" : "Necesitas la LLAVE INGLESA 🔧 (Sigue el haz de luz rojo)"; prompt.style.display = 'block';
+      } else { prompt.style.display = 'none'; }
+    } else { prompt.style.display = 'none'; }
+  }
+
   function startEscapeSequence() {
     gameState = 'CINEMATIC';
-    controls.unlock();
+    document.exitPointerLock();
+    document.getElementById('interaction-prompt').style.display = 'none';
+    document.getElementById('ui-container').style.display = 'none';
+    document.getElementById('limbo-menu').style.display = 'none';
+  }
+
+  function triggerNightCrash() {
+    document.getElementById('crash-modal').style.display = 'block';
   }
 
   function startNightPhase() {
     document.getElementById('crash-modal').style.display = 'none';
+    document.getElementById('ui-container').style.display = 'flex';
+    document.getElementById('objective-banner').textContent = "🌌 Sigue la LUZ ROJA para la LLAVE INGLESA 🔧 y la LUZ AZUL para el YATE 🔷";
+
     scene.background = new THREE.Color(0x020617);
+    scene.fog = new THREE.FogExp2(0x020617, 0.008); 
+    hemiLight.intensity = 0.15; sunLight.intensity = 0;
     flashlight.intensity = 8.0;
-    camera.position.set(NIGHT_ISLAND_CENTER.x - 70, 8, NIGHT_ISLAND_CENTER.z + 50);
+
+    playerPos.set(NIGHT_ISLAND_CENTER.x - 70, 11.7, NIGHT_ISLAND_CENTER.z + 50);
+    yaw = -Math.PI / 4;
     epsteinGroup.visible = true;
+
+    const yBeaconGeom = new THREE.CylinderGeometry(2, 2, 300, 16);
+    const yBeaconMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide });
+    yachtBeaconMesh = new THREE.Mesh(yBeaconGeom, yBeaconMat);
+    yachtBeaconMesh.position.set(NIGHT_ISLAND_CENTER.x - 80, 150, NIGHT_ISLAND_CENTER.z + 65);
+    scene.add(yachtBeaconMesh);
+
+    yachtLight = new THREE.PointLight(0x38bdf8, 10, 50);
+    yachtLight.position.set(NIGHT_ISLAND_CENTER.x - 80, 6, NIGHT_ISLAND_CENTER.z + 65);
+    scene.add(yachtLight);
+
     gameState = 'PHASE2_NIGHT';
-    controls.lock();
+    document.body.requestPointerLock();
   }
 
   function startSeaBossPhase() {
     gameState = 'PHASE3_SEA_BOSS';
     epsteinGroup.visible = false;
+
+    if (yachtBeaconMesh) scene.remove(yachtBeaconMesh);
+    if (yachtLight) scene.remove(yachtLight);
+
+    document.getElementById('ui-container').style.display = 'none';
+    document.getElementById('boss-ui').style.display = 'flex';
+
     yachtGroup.position.set(0, 0.5, 500);
+    yachtGroup.rotation.set(0, 0, 0);
+
     seaMonsterGroup.position.set(0, -1, 570);
     seaMonsterGroup.visible = true;
-    document.getElementById('boss-ui').style.display = 'flex';
+
+    yaw = Math.PI; pitch = 0.1;
     camera.position.set(0, 3.5, 496);
-    controls.lock();
+
+    document.body.requestPointerLock();
   }
 
   function shootProjectileAtMonster() {
-    monsterHealth -= 10;
-    document.getElementById('boss-hp-fill').style.width = monsterHealth + '%';
-    if (monsterHealth <= 0) {
-      gameState = 'WIN';
-      controls.unlock();
-      document.getElementById('boss-ui').style.display = 'none';
-      document.getElementById('win-modal').style.display = 'flex';
+    const projMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const proj = new THREE.Mesh(new THREE.SphereGeometry(0.4), projMat);
+    proj.position.copy(camera.position);
+
+    const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+    scene.add(proj);
+    projectiles.push({ mesh: proj, dir: dir, life: 0 });
+
+    raycaster.setFromCamera(screenCenter, camera);
+    const intersects = raycaster.intersectObject(seaMonsterGroup, true);
+
+    if (intersects.length > 0) {
+      monsterHealth -= 7;
+      if (monsterHealth < 0) monsterHealth = 0;
+      document.getElementById('boss-hp-fill').style.width = monsterHealth + '%';
+      seaMonsterGroup.position.z += 0.8; 
+
+      if (monsterHealth <= 0) {
+        gameState = 'WIN';
+        document.exitPointerLock();
+        document.getElementById('boss-ui').style.display = 'none';
+        document.getElementById('win-modal').style.display = 'flex';
+      }
+    }
+  }
+
+  function spawnSmokeParticle() {
+    const pMat = new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.8 });
+    const p = new THREE.Mesh(new THREE.SphereGeometry(0.3 + Math.random() * 0.4), pMat);
+    p.position.set(yachtGroup.position.x + (Math.random() - 0.5), yachtGroup.position.y + 2.5, yachtGroup.position.z - 2);
+    scene.add(p);
+    smokeParticles.push({ mesh: p, life: 0 });
+  }
+
+  function updateEpsteinAI() {
+    if (gameState !== 'PHASE2_NIGHT') return;
+
+    animTime += 0.15;
+    const dist = epsteinGroup.position.distanceTo(playerPos);
+
+    if (dist < 90) { 
+      epsteinGroup.lookAt(playerPos.x, epsteinGroup.position.y, playerPos.z);
+      const dir = new THREE.Vector3().subVectors(playerPos, epsteinGroup.position).normalize();
+      
+      const nextX = epsteinGroup.position.x + dir.x * epsteinSpeed;
+      const nextZ = epsteinGroup.position.z + dir.z * epsteinSpeed;
+
+      if (isValidPosition(nextX, epsteinGroup.position.z, 0.6, epsteinGroup.position.y)) epsteinGroup.position.x = nextX;
+      if (isValidPosition(epsteinGroup.position.x, nextZ, 0.6, epsteinGroup.position.y)) epsteinGroup.position.z = nextZ;
+
+      if (epsteinArmL && epsteinArmR) {
+        epsteinArmL.rotation.x = Math.sin(animTime) * 0.4;
+        epsteinArmR.rotation.x = -Math.sin(animTime) * 0.4;
+      }
+
+      if (dist < 1.8) {
+        gameState = 'GAMEOVER';
+        document.exitPointerLock();
+        document.getElementById('gameover-reason').textContent = "Epstein te acorraló en la gran isla...";
+        document.getElementById('gameover-modal').style.display = 'block';
+      }
     }
   }
 
   function animate() {
     requestAnimationFrame(animate);
 
-    const time = performance.now();
-    const delta = (time - prevTime) / 1000;
+    if (gameState === 'PHASE1') {
+      updatePlayerMovement();
+      updateRaycastPrompt();
+      if (keyMesh) keyMesh.rotation.y += 0.02;
+      items.forEach(item => { item.rotation.y += 0.02; });
+    } 
+    else if (gameState === 'CINEMATIC') {
+      escapeProgress += 0.004;
 
-    if (controls.isLocked) {
-      velocity.x -= velocity.x * 10.0 * delta;
-      velocity.z -= velocity.z * 10.0 * delta;
-
-      direction.z = Number(moveForward) - Number(moveBackward);
-      direction.x = Number(moveRight) - Number(moveLeft);
-      direction.normalize();
-
-      if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
-      if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
-
-      controls.moveRight(-velocity.x * delta);
-      controls.moveForward(-velocity.z * delta);
-
-      if (gameState === 'PHASE2_NIGHT') {
-        flashlight.position.copy(camera.position);
-        const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
-        flashlight.target.position.copy(camera.position).add(dir.multiplyScalar(15));
-        flashlight.target.updateMatrixWorld();
-
-        const dist = epsteinGroup.position.distanceTo(camera.position);
-        if (dist < 80) {
-          epsteinGroup.lookAt(camera.position.x, epsteinGroup.position.y, camera.position.z);
-          epsteinGroup.translateZ(0.08);
-          if (dist < 2.0) {
-            controls.unlock();
-            document.getElementById('gameover-modal').style.display = 'block';
-          }
-        }
-      }
-    }
-
-    if (gameState === 'CINEMATIC') {
-      escapeProgress += 0.005;
-      if (escapeProgress < 0.5) {
-        yachtGroup.position.z -= 0.5;
+      if (escapeProgress < 0.35) {
+        yachtGroup.position.z += 0.4; yachtGroup.position.x -= 0.3; yachtGroup.rotation.y = -0.5;
         camera.position.set(yachtGroup.position.x + 10, 8, yachtGroup.position.z - 14);
         camera.lookAt(yachtGroup.position);
-      } else {
-        document.getElementById('crash-modal').style.display = 'block';
+      } 
+      else if (escapeProgress < 0.85) {
+        yachtGroup.position.set(-100 + (escapeProgress - 0.35) * -160, 0.2, 0 + (escapeProgress - 0.35) * -220);
+        yachtGroup.rotation.y = -2.2;
+        if (Math.random() > 0.3) spawnSmokeParticle();
+        camera.position.set(yachtGroup.position.x + 15, 12, yachtGroup.position.z + 20);
+        camera.lookAt(yachtGroup.position);
+      } 
+      else {
+        yachtGroup.position.set(NIGHT_ISLAND_CENTER.x - 80, 1.2, NIGHT_ISLAND_CENTER.z + 65);
+        yachtGroup.rotation.set(0.15, -1.8, -0.2);
+        triggerNightCrash();
+      }
+
+      smokeParticles.forEach((sp, index) => {
+        sp.mesh.position.y += 0.05; sp.mesh.material.opacity -= 0.015;
+        if (sp.mesh.material.opacity <= 0) { scene.remove(sp.mesh); smokeParticles.splice(index, 1); }
+      });
+    }
+    else if (gameState === 'PHASE2_NIGHT') {
+      updatePlayerMovement();
+      updateRaycastPrompt();
+      updateEpsteinAI();
+      if (wrenchGroup) {
+        wrenchGroup.rotation.y += 0.03;
+        keyLight.intensity = 6 + Math.sin(Date.now() * 0.006) * 4;
+      }
+    }
+    else if (gameState === 'PHASE3_SEA_BOSS') {
+      yachtGroup.position.z += 0.6;
+      camera.position.z += 0.6;
+      camera.rotation.set(0, 0, 0); camera.rotation.y = yaw; camera.rotation.x = pitch;
+
+      monsterDist -= 0.06;
+      seaMonsterGroup.position.z = yachtGroup.position.z + monsterDist;
+      seaMonsterGroup.position.y = -1 + Math.sin(Date.now() * 0.003) * 1.2;
+      seaMonsterGroup.lookAt(yachtGroup.position.x, seaMonsterGroup.position.y, yachtGroup.position.z);
+
+      projectiles.forEach((p, idx) => {
+        p.mesh.position.addScaledVector(p.dir, 2.5);
+        p.life++;
+        if (p.life > 60) { scene.remove(p.mesh); projectiles.splice(idx, 1); }
+      });
+
+      if (monsterDist < 8 && monsterHealth > 0) {
+        gameState = 'GAMEOVER';
+        document.exitPointerLock();
+        document.getElementById('boss-ui').style.display = 'none';
+        document.getElementById('gameover-reason').textContent = "¡El Leviatán Marítimo devoró el yate!";
+        document.getElementById('gameover-modal').style.display = 'block';
       }
     }
 
-    prevTime = time;
     renderer.render(scene, camera);
   }
 
